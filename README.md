@@ -10,11 +10,6 @@
 python -m pip install -e .
 ```
 
-### Установка с TestPyPI
-
-```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ metetl-lepalovskaya-6303
-```
 ## Использование (CLI)
 
 После установки становится доступна команда traffic_cam.
