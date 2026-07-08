@@ -1,30 +1,40 @@
 import pandas as pd
-import matplotlib
-
-matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-def run_analysis(csv_path, main_logger):
-    main_logger.info(f"Загрузка данных из {csv_path}...")
-    try:
-        df = pd.read_csv(csv_path)
-    except Exception as e:
-        main_logger.error(f"Не удалось прочитать CSV: {e}")
-        return
+def run_analysis(input_path, main_logger):
+    path = Path(input_path)
 
-    avg_metrics = df.groupby('Mode')[['Fetch_ms', 'Analysis_ms', 'Compensate_ms', 'Render_ms']].mean()
+    if path.suffix == '.csv':
+        df = pd.read_csv(input_path)
+        avg = df.groupby('Mode')[['Fetch_ms', 'Analysis_ms', 'Compensate_ms', 'Render_ms']].mean()
+        avg.plot(kind='bar', figsize=(10, 6), title='Средние временные затраты')
+        plt.ylabel('Время (мс)')
+        plt.tight_layout()
+        plt.savefig(path.parent / "performance_plot.png")
+        plt.show()
 
-    avg_metrics.plot(kind='bar', figsize=(10, 6), title='Средние временные затраты по этапам (мс)')
-    plt.ylabel('Время (мс)')
-    plt.xticks(rotation=0)
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
+    elif path.suffix == '.log':
+        data = []
+        with open(input_path, 'r') as f:
+            for line in f:
+                if "X=" in line:
+                    parts = line.split('|')[-1].split(',')
+                    x = float(parts[0].replace('X=', '').replace('px', ''))
+                    y = float(parts[1].replace('Y=', '').replace('px', ''))
+                    data.append((x, y))
 
-    csv_file = Path(csv_path)
-    output_path = csv_file.parent / f"{csv_file.stem}_plot.png"
+        df = pd.DataFrame(data, columns=['X', 'Y'])
 
-    plt.savefig(output_path)
-    main_logger.info(f"График успешно сохранен в {output_path}")
-    plt.show()
+        plt.figure(figsize=(8, 8))
+        plt.plot(df['X'], df['Y'], alpha=0.5, label='Траектория смещения')
+        plt.scatter(df['X'].iloc[0], df['Y'].iloc[0], color='green', label='Старт')
+        plt.scatter(df['X'].iloc[-1], df['Y'].iloc[-1], color='red', label='Финиш')
+        plt.title('Траектория "гуляния" камеры (смещение зоны)')
+        plt.xlabel('Смещение X (пиксели)')
+        plt.ylabel('Смещение Y (пиксели)')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("stats/trajectory_plot.png")
+        plt.show()

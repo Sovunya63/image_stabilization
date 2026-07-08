@@ -26,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
         "analyze",
         help="анализ CSV файла метрик и построение графиков"
     )
-    analyze.add_argument("--csv", required=True, help="путь к CSV файлу с метриками")
+    analyze.add_argument("--file", required=True, help="путь к CSV файлу с метриками")
 
     return parser
 
