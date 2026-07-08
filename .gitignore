@@ -4,8 +4,8 @@ __pycache__/
 data/
 
 logs/
-images/
 
 dist/
 build/
 *.egg-info/
+stats/
