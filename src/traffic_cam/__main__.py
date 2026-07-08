@@ -23,7 +23,7 @@ def main(argv=None):
         elif args.command == "analyze":
             logger.info("Запуск анализа метрик...")
 
-            from .core.metrics import run_analysis
+            from .analytics.analysis import run_analysis
             run_analysis(args.csv, logger)
 
         logger.info("Завершено успешно.")

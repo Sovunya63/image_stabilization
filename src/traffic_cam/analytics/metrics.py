@@ -3,31 +3,29 @@ import numpy as np
 import time
 import csv
 from pathlib import Path
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from traffic_cam.logging_config import get_logger
 
 logger = get_logger("metrics")
 
 
 class MetricsTracker:
-    def __init__(self, csv_filename="logs/performance_metrics.csv"):
+    def __init__(self, csv_filename="stats/perf_metrics.csv"):
         self.smoothed_metrics = {}
         self.csv_filename = csv_filename
-        self.t_loop_start = 0
+        self.prev_frame_time = time.perf_counter()
 
         Path(self.csv_filename).parent.mkdir(parents=True, exist_ok=True)
         self.file = open(self.csv_filename, mode='w', newline='', encoding='utf-8')
         self.csv_writer = csv.writer(self.file)
-        self.csv_writer.writerow(
-            ['Mode', 'Decode_ms', 'Resize_ms', 'Fetch_ms', 'Analysis_ms', 'Compensate_ms', 'Render_ms', 'FPS'])
+        self.csv_writer.writerow(['Mode', 'Fetch_ms', 'Analysis_ms', 'Compensate_ms', 'Render_ms', 'FPS'])
 
     def start_loop(self):
-        self.t_loop_start = time.perf_counter()
-
+        pass
     def update_and_draw(self, frame, current_metrics, mode):
-        fps = 1.0 / (time.perf_counter() - self.t_loop_start + 1e-6)
+        now = time.perf_counter()
+        fps = 1.0 / (now - self.prev_frame_time + 1e-6)
+        self.prev_frame_time = now
+
         current_metrics['FPS'] = fps
 
         for k, v in current_metrics.items():
@@ -35,8 +33,6 @@ class MetricsTracker:
 
         self.csv_writer.writerow([
             mode,
-            f"{current_metrics.get('Decode', 0):.2f}",
-            f"{current_metrics.get('Resize', 0):.2f}",
             f"{current_metrics.get('Fetch', 0):.2f}",
             f"{current_metrics.get('Analysis', 0):.2f}",
             f"{current_metrics.get('Compensate', 0):.2f}",
@@ -62,29 +58,3 @@ class MetricsTracker:
 
     def close(self):
         self.file.close()
-
-
-def run_analysis(csv_path, main_logger):
-    main_logger.info(f"Загрузка данных из {csv_path}...")
-    try:
-        df = pd.read_csv(csv_path)
-    except Exception as e:
-        main_logger.error(f"Не удалось прочитать CSV: {e}")
-        return
-
-    sns.set_theme(style="whitegrid")
-
-    plt.figure(figsize=(10, 5))
-    for mode in df['Mode'].unique():
-        subset = df[df['Mode'] == mode]
-        plt.plot(subset['FPS'].values, label=f'Режим: {mode}')
-
-    plt.title('Стабильность FPS во времени')
-    plt.xlabel('Номер кадра')
-    plt.ylabel('FPS')
-    plt.legend()
-
-    output_path = "logs/fps_plot.png"
-    plt.savefig(output_path)
-    main_logger.info(f"График сохранен в {output_path}")
-    plt.show()

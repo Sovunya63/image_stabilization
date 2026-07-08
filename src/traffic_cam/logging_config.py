@@ -45,3 +45,27 @@ def get_logger(module_id=None) -> logging.Logger:
         return logging.getLogger(module_id)
 
     return logging.getLogger(f"{LOGGER_NAME}.{module_id}")
+
+
+def get_displacement_logger(log_file="logs/displacement.log") -> logging.Logger:
+    logger = logging.getLogger("displacement")
+
+    if logger.hasHandlers():
+        return logger
+
+    logger.setLevel(logging.DEBUG)
+
+    logger.propagate = False
+
+    log_path = Path(log_file)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+
+    file_handler.setFormatter(
+        logging.Formatter("%(asctime)s.%(msecs)03d | %(message)s", datefmt="%H:%M:%S")
+    )
+
+    logger.addHandler(file_handler)
+    return logger

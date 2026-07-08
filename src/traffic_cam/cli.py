@@ -15,6 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="запуск процесса стабилизации и отслеживания"
     )
     track.add_argument("--source", type=str, default="0", help="путь к видео или RTSP (по умолчанию: 0)")
+    track.add_argument("--no-hud", action="store_true", help="скрыть метрики производительности на экране")
     track.add_argument("--mask", type=str, default=None, help="путь к PNG маске")
     track.add_argument("--features", type=int, default=500, help="количество точек ORB (по умолчанию: 500)")
     track.add_argument("--width", type=int, default=0, help="ширина кадра (0 = исходная)")

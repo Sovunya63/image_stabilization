@@ -10,11 +10,6 @@
 python -m pip install -e .
 ```
 
-### Установка с TestPyPI
-
-```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ metetl-lepalovskaya-6303
-```
 ## Использование (CLI)
 
 После установки становится доступна команда traffic_cam.
@@ -25,6 +20,8 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 
 **Параметры:**
 - `--source` — путь к видеофайлу или RTSP ссылке (по умолчанию: 0 для веб-камеры)
+
+- `--no-hud` — запуск программы без отображения метрик
 
 - `--mask` — путь к PNG маске в градациях серого для исключения нестатичных зон (опционально)
 
@@ -49,7 +46,7 @@ traffic_cam track --source data/record3.mp4 --width 1280 --height 720 --points 4
 - `--csv` — путь к CSV-файлу с собранными метриками
 
 ```bash
-traffic_cam analyze --csv logs/performance_metrics.csv
+traffic_cam analyze --csv stats/perf_metrics.csv
 ```
 
 ### Справка
@@ -64,11 +61,13 @@ traffic_cam --help
 
 - **Файл логов приложения::** `logs/traffic_cam.log` (уровень DEBUG — подробная информация о работе алгоритмов, скачках времени и ошибках)
 - **Консоль:** уровень INFO (краткие системные уведомления о статусах переключения режимов)
-- **Метрики производительности:** `logs/performance_metrics.csv` (сырые данные времени выполнения каждого этапа обработки кадра)
-- **Графики:** сохраняются в logs/fps_plot.png при запуске команды analyze.
+- **Метрики производительности:** `stats/perf_metrics.csv` (сырые данные времени выполнения каждого этапа обработки кадра)
+- **Графики:** сохраняются в stats/time_plot.png при запуске команды analyze.
 
 ## Требования
 
 - Python 3.12+
 - Зависимости перечислены в `pyproject.toml`
+
+
 

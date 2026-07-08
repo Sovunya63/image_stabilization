@@ -33,6 +33,8 @@ class ThreadedCamera:
         self.started = False
         self.read_lock = threading.Lock()
 
+        self.frame_ready = threading.Event()
+
     def start(self):
         if self.started:
             return self
@@ -55,6 +57,8 @@ class ThreadedCamera:
                 with self.read_lock:
                     self.frame = frame
 
+                self.frame_ready.set()
+
                 if self.frame_delay > 0:
                     elapsed = time.perf_counter() - t0
                     if self.frame_delay > elapsed:
@@ -63,6 +67,9 @@ class ThreadedCamera:
                 self.started = False
 
     def read(self):
+        self.frame_ready.wait()
+        self.frame_ready.clear()
+
         with self.read_lock:
             if self.frame is None:
                 return False, None

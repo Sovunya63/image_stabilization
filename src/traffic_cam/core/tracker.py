@@ -1,12 +1,14 @@
 import cv2
 import numpy as np
 import time
+
 from traffic_cam.io_utils.camera import ThreadedCamera
-from traffic_cam.logging_config import get_logger
 from traffic_cam.ui.interactive import UIHandler
-from traffic_cam.core.metrics import MetricsTracker
+from traffic_cam.analytics.metrics import MetricsTracker
+from traffic_cam.logging_config import get_logger, get_displacement_logger
 
 logger = get_logger("tracker")
+disp_logger = get_displacement_logger()
 
 
 def run_tracking_pipeline(args, main_logger):
@@ -37,6 +39,8 @@ def run_tracking_pipeline(args, main_logger):
     initial_zone = None
     mode = 'preview'
 
+    last_render_time = 0.0
+
     while True:
         metrics_tracker.start_loop()
 
@@ -48,32 +52,18 @@ def run_tracking_pipeline(args, main_logger):
             logger.info("Поток данных завершен.")
             break
 
-        current_metrics = {'Fetch': fetch_time, 'Analysis': 0.0, 'Compensate': 0.0, 'Render': 0.0}
+        current_metrics = {'Fetch': fetch_time, 'Analysis': 0.0, 'Compensate': 0.0, 'Render': last_render_time}
 
         if mode == 'preview':
-            cv2.putText(frame, "Aim & Press SPACE to lock ref", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255),
-                        2)
-
-            key = cv2.waitKey(30) & 0xFF
-            if key == ord(' '):
-                t1 = time.perf_counter()
-                ref_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                ref_keypoints, ref_descriptors = orb.detectAndCompute(ref_gray, mask)
-                current_metrics['Analysis'] = (time.perf_counter() - t1) * 1000
-
-                ui.frame_copy = frame.copy()
-                mode = 'setup'
-                logger.info(f"Эталон захвачен. Ожидается ввод {args.points} точек.")
-            elif key == ord('q'):
-                break
+            h = frame.shape[0]
+            cv2.putText(frame, "Aim & Press SPACE to lock ref", (20, h - 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
         elif mode == 'setup':
             frame = ui.frame_copy.copy()
-            cv2.putText(frame, f"Click {args.points} points to set zone", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                        (255, 255, 0), 2)
-
-            if cv2.waitKey(30) & 0xFF == ord('q'):
-                break
+            h = frame.shape[0]
+            cv2.putText(frame, f"Click {args.points} points to set zone", (20, h - 60),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
             if ui.setup_done:
                 initial_zone = np.float32([ui.points])
@@ -98,18 +88,36 @@ def run_tracking_pipeline(args, main_logger):
                 matrix, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
                 if matrix is not None:
+                    dx, dy = matrix[0, 2], matrix[1, 2]
+                    disp_logger.debug(f"X={dx:7.1f}px, Y={dy:7.1f}px")
+
                     transformed_zone = cv2.perspectiveTransform(initial_zone, matrix)
                     cv2.polylines(frame, [np.int32(transformed_zone)], True, (0, 255, 0), 3)
             current_metrics['Compensate'] = (time.perf_counter() - t2) * 1000
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        if not args.no_hud:
+            metrics_tracker.update_and_draw(frame, current_metrics, mode)
 
-        t3 = time.perf_counter()
-        metrics_tracker.update_and_draw(frame, current_metrics, mode)
+        t_render_start = time.perf_counter()
         cv2.imshow(window_name, frame)
-        current_metrics['Render'] = (time.perf_counter() - t3) * 1000
+        key = cv2.waitKey(1) & 0xFF
 
+        if key == ord('q') or key == 27:
+            logger.info("Работа прервана пользователем.")
+            break
+
+        elif key == ord(' ') and mode == 'preview':
+            t_math = time.perf_counter()
+            ref_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            ref_keypoints, ref_descriptors = orb.detectAndCompute(ref_gray, mask)
+            current_metrics['Analysis'] = (time.perf_counter() - t_math) * 1000
+
+            ui.frame_copy = frame.copy()
+            mode = 'setup'
+            logger.info(f"Эталон захвачен. Ожидается ввод {args.points} точек.")
+
+    logger.info("Завершение процессов...")
     camera.stop()
     metrics_tracker.close()
     cv2.destroyAllWindows()
+    cv2.waitKey(1)
