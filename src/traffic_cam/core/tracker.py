@@ -93,6 +93,7 @@ def run_tracking_pipeline(args, main_logger):
 
                     transformed_zone = cv2.perspectiveTransform(initial_zone, matrix)
                     cv2.polylines(frame, [np.int32(transformed_zone)], True, (0, 255, 0), 3)
+
             current_metrics['Compensate'] = (time.perf_counter() - t2) * 1000
 
         if not args.no_hud:
@@ -100,6 +101,7 @@ def run_tracking_pipeline(args, main_logger):
 
         t_render_start = time.perf_counter()
         cv2.imshow(window_name, frame)
+
         key = cv2.waitKey(1) & 0xFF
 
         if key == ord('q') or key == 27:

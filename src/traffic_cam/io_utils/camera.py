@@ -24,7 +24,7 @@ class ThreadedCamera:
         is_stream = str(src).startswith('rtsp') or str(src).startswith('http') or isinstance(src, int)
         self.frame_delay = (1.0 / self.video_fps) if (self.video_fps > 0 and not is_stream) else 0
 
-        logger.info(f"Камера инициализирована. Разрешение: {self.width}x{self.height}. FPS: {self.video_fps}")
+        logger.info(f"Изображение инициализировано. Разрешение: {self.width}x{self.height}.")
 
         ret, self.frame = self.cap.read()
         if ret and (self.width != orig_w or self.height != orig_h):

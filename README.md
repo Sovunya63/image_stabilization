@@ -44,9 +44,10 @@ traffic_cam track --source data/record3.mp4 --width 1280 --height 720 --points 4
 
 **Параметры:**
 - `--file` — путь к CSV-файлу с собранными метриками или к .log с перемещениями
+- `--tail `— количество последних записей для анализа (по умолчанию: 100)
 
 ```bash
-traffic_cam analyze --csv stats/perf_metrics.csv
+traffic_cam analyze --file stats/perf_metrics.csv
 ```
 
 ### Справка
@@ -69,6 +70,5 @@ traffic_cam track --help
 
 - Python 3.12+
 - Зависимости перечислены в `pyproject.toml`
-- Аналитический блок пока находится на этапе тестирования и дебагга
-
+- Аналитический блок и работа с .mp4 находятся на этапе тестирования и дебагга
 

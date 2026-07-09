@@ -24,7 +24,7 @@ def main(argv=None):
             logger.info("Запуск анализа метрик...")
 
             from .analytics.analysis import run_analysis
-            run_analysis(args.csv, logger)
+            run_analysis(args.file, logger, last_n=args.tail)
 
         logger.info("Завершено успешно.")
         return 0

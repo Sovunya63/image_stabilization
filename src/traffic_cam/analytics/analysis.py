@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-def run_analysis(input_path, main_logger):
+def run_analysis(input_path, main_logger, last_n=100):
     path = Path(input_path)
 
     if path.suffix == '.csv':
         df = pd.read_csv(input_path)
-        avg = df.groupby('Mode')[['Fetch_ms', 'Analysis_ms', 'Compensate_ms', 'Render_ms']].mean()
+        df_tail = df.tail(last_n)
+        avg = df_tail.groupby('Mode')[['Fetch_ms', 'Analysis_ms', 'Compensate_ms', 'Render_ms']].mean()
         avg.plot(kind='bar', figsize=(10, 6), title='Средние временные затраты')
         plt.ylabel('Время (мс)')
         plt.tight_layout()

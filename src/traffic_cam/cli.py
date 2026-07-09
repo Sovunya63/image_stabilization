@@ -24,10 +24,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     analyze = subparsers.add_parser(
         "analyze",
-        help="анализ CSV файла метрик и построение графиков"
+        help="анализ файла метрик/лога и построение графиков"
     )
-    analyze.add_argument("--file", required=True, help="путь к CSV файлу с метриками")
-
+    analyze.add_argument("--file", required=True, help="путь к файлу")
+    analyze.add_argument("--tail", type=int, default=100, help="количество последних записей для анализа")
     return parser
 
 
@@ -46,10 +46,5 @@ def check_args(args, logger):
             if not Path(args.source).exists():
                 logger.error(f"Видеофайл не найден: {args.source}")
                 return False
-
-    elif args.command == "analyze":
-        if not Path(args.csv).exists():
-            logger.error(f"CSV файл не найден: {args.csv}")
-            return False
 
     return True
